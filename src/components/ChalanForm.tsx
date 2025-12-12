@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Plus, Trash2, Download, Printer } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChalanItem } from '../types';
+import { ChalanItem, Client } from '../types';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -13,9 +13,9 @@ interface ChalanFormProps {
 export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
   const { clients, getClientInventory, getClientChalanCount, addChalan } = useData();
   const { user } = useAuth();
-  
+
   const [selectedClientId, setSelectedClientId] = useState('');
-  const [selectedClient, setSelectedClient] = useState(clients[0] || null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(clients[0] || null);
   const [serialNumber, setSerialNumber] = useState(1);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [poDate, setPoDate] = useState('');
@@ -44,20 +44,20 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
     setItems(prev => {
       const newItems = [...prev];
       newItems[index] = { ...newItems[index], [field]: value };
-      
+
       // Auto-calculate total quantity
       if (field === 'noOfBoxes' || field === 'costPerBox') {
         const item = newItems[index];
         newItems[index].totalQty = item.noOfBoxes * item.costPerBox;
       }
-      
+
       return newItems;
     });
   };
 
   const handleParticularsChange = (index: number, value: string) => {
     handleItemChange(index, 'particulars', value);
-    
+
     if (value.trim() && selectedClientId) {
       const inventory = getClientInventory(selectedClientId);
       const filtered = inventory
@@ -113,7 +113,7 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
 
     addChalan(chalanData);
     alert('Chalan saved successfully!');
-    
+
     // Reset form
     setItems([{ id: '1', sno: 1, particulars: '', noOfBoxes: 0, costPerBox: 0, totalQty: 0 }]);
     setPoDate('');
@@ -135,10 +135,10 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
         useCORS: true,
         backgroundColor: '#ffffff'
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
+
       const imgWidth = 210;
       const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -168,7 +168,7 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-8 no-print">
         <button
           onClick={() => onNavigate('dashboard')}
           className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -178,7 +178,7 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
         <h1 className="text-3xl font-bold text-white">Create Delivery Chalan</h1>
       </div>
 
-      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 mb-6">
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 mb-6 no-print">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-white mb-2">Select Client</label>
@@ -195,7 +195,7 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
               ))}
             </select>
           </div>
-          
+
           <div className="flex gap-4">
             <button
               onClick={handleSaveChalan}
@@ -224,84 +224,78 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div id="chalan-form" className="bg-white rounded-xl p-8 shadow-lg">
+      <div id="chalan-form" className="bg-white rounded-xl p-4 shadow-lg" style={{ maxWidth: '210mm', margin: '0 auto', fontSize: '11px' }}>
         {/* Header */}
-        <div className="border-b-2 border-gray-800 pb-4 mb-6">
+        <div className="border-b-2 border-gray-800 pb-2 mb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">CP</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Delivery Chalan</h1>
-                <p className="text-gray-600">Creative Prints</p>
-              </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">Delivery Chalan</h1>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-600">Date: {date}</p>
-              <p className="text-sm text-gray-600">S.No: {serialNumber}</p>
+              <p className="text-xs text-gray-600">Date: {date}</p>
+              <p className="text-xs text-gray-600">S.No: {serialNumber}</p>
             </div>
           </div>
         </div>
 
         {/* Client Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">To:</h3>
-            <div className="bg-gray-50 p-4 rounded-lg min-h-[120px]">
+            <h3 className="text-sm font-semibold text-gray-800 mb-1">To:</h3>
+            <div className="bg-gray-50 p-2 rounded-lg min-h-[80px]">
               {selectedClient ? (
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-800">{selectedClient.name}</p>
-                  <p className="text-gray-600">{selectedClient.address}</p>
-                  <p className="text-gray-600">Phone: {selectedClient.phone}</p>
-                  <p className="text-gray-600">Email: {selectedClient.email}</p>
+                <div className="space-y-1">
+                  <p className="font-medium text-gray-800 text-xs">{selectedClient.name}</p>
+                  <p className="text-gray-600 text-xs">{selectedClient.address}</p>
+                  <p className="text-gray-600 text-xs">Phone: {selectedClient.phone}</p>
+                  <p className="text-gray-600 text-xs">Email: {selectedClient.email}</p>
                 </div>
               ) : (
                 <p className="text-gray-400">Select a client to auto-fill details</p>
               )}
             </div>
           </div>
-          
-          <div className="space-y-4">
+
+          <div className="space-y-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">PO Date</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">PO Date</label>
               <div className="relative">
                 <input
                   type="date"
                   value={poDate}
                   onChange={(e) => setPoDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">PO Number</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">PO Number</label>
               <input
                 type="text"
                 value={poNumber}
                 onChange={(e) => setPoNumber(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter PO number"
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Serial Number</label>
               <input
                 type="number"
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
         </div>
 
         {/* Items Table */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Items</h3>
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-800">Items</h3>
             <button
               onClick={addNewItem}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
@@ -310,24 +304,24 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
               Add Item
             </button>
           </div>
-          
+
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
+            <table className="w-full border-collapse border border-gray-300" style={{ fontSize: '10px' }}>
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">S.No</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Particulars</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">No. of Boxes</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Cost per Box</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Total Qty</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Action</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">S.No</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">Particulars</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">No. of Boxes</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">Cost per Box</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">Total Qty</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-700">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, index) => (
                   <tr key={item.id}>
-                    <td className="border border-gray-300 px-4 py-2">{item.sno}</td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 py-1">{item.sno}</td>
+                    <td className="border border-gray-300 px-2 py-1">
                       <div className="relative">
                         <input
                           type="text"
@@ -351,36 +345,36 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
                         )}
                       </div>
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 py-1">
                       <input
                         type="number"
                         value={item.noOfBoxes}
                         onChange={(e) => handleItemChange(index, 'noOfBoxes', parseInt(e.target.value) || 0)}
-                        className="w-full px-2 py-1 border-none focus:ring-0 focus:outline-none"
+                        className="w-full px-1 py-0.5 text-xs border-none focus:ring-0 focus:outline-none"
                         min="0"
                       />
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 py-1">
                       <input
                         type="number"
                         value={item.costPerBox}
                         onChange={(e) => handleItemChange(index, 'costPerBox', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1 border-none focus:ring-0 focus:outline-none"
+                        className="w-full px-1 py-0.5 text-xs border-none focus:ring-0 focus:outline-none"
                         min="0"
                         step="0.01"
                       />
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 py-1">
                       <input
                         type="number"
                         value={item.totalQty}
                         onChange={(e) => handleItemChange(index, 'totalQty', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1 border-none focus:ring-0 focus:outline-none"
+                        className="w-full px-1 py-0.5 text-xs border-none focus:ring-0 focus:outline-none"
                         min="0"
                         step="0.01"
                       />
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 py-1">
                       {items.length > 1 && (
                         <button
                           onClick={() => removeItem(index)}
@@ -398,41 +392,41 @@ export const ChalanForm: React.FC<ChalanFormProps> = ({ onNavigate }) => {
         </div>
 
         {/* Additional Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle No.</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Vehicle No.</label>
             <input
               type="text"
               value={vehicleNo}
               onChange={(e) => setVehicleNo(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter vehicle number"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Remarks</label>
             <textarea
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              rows={3}
+              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              rows={2}
               placeholder="Enter any remarks"
             />
           </div>
         </div>
 
         {/* Signatures */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3">
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-4">Receiver's Signature:</h4>
-            <div className="h-16 border-b border-gray-300"></div>
+            <h4 className="text-xs font-medium text-gray-700 mb-2">Receiver's Signature:</h4>
+            <div className="h-12 border-b border-gray-300"></div>
           </div>
-          
+
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-4">For Creative Prints:</h4>
-            <div className="h-16 border-b border-gray-300"></div>
-            <p className="text-xs text-gray-600 mt-2">Authorized Signature</p>
+            <h4 className="text-xs font-medium text-gray-700 mb-2">For Creative Prints:</h4>
+            <div className="h-12 border-b border-gray-300"></div>
+            <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
           </div>
         </div>
       </div>

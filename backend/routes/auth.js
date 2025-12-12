@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
   try {
     // Only one root user allowed
     if (isRoot) {
-      const [roots] = await pool.query('SELECT * FROM users WHERE isRoot = TRUE');
+      const [roots] = await pool.query('SELECT * FROM users WHERE isRoot = ?', [1]);
       if (roots.length > 0) return res.status(400).json({ message: 'Root user already exists' });
     }
     // Username must be unique
@@ -39,6 +39,17 @@ router.post('/register', async (req, res) => {
     res.json({ token });
   } catch (err) {
     console.error('REGISTER ERROR:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Check if root user exists
+router.get('/check-root', async (req, res) => {
+  try {
+    const [roots] = await pool.query('SELECT * FROM users WHERE isRoot = ?', [1]);
+    res.json({ rootExists: roots.length > 0 });
+  } catch (err) {
+    console.error('CHECK ROOT ERROR:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
