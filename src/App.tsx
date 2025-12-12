@@ -40,7 +40,6 @@ const AppContent: React.FC = () => {
 
   return (
     <Layout>
-     
       {renderPage()}
     </Layout>
   );
@@ -49,10 +48,18 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <DataProvider>
-        <AppContent />
-      </DataProvider>
+      <AppWithAuth />
     </AuthProvider>
+  );
+}
+
+function AppWithAuth() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <DataProvider isAuthenticated={isAuthenticated}>
+      <AppContent />
+    </DataProvider>
   );
 }
 

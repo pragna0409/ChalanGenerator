@@ -33,33 +33,53 @@ export const useData = () => {
 
 interface DataProviderProps {
   children: ReactNode;
+  isAuthenticated: boolean;
 }
 
-export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
+export const DataProvider: React.FC<DataProviderProps> = ({ children, isAuthenticated }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [chalans, setChalans] = useState<Chalan[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Function to fetch all data
+  const fetchAllData = async () => {
+    if (!isAuthenticated) {
+      setClients([]);
+      setInventory([]);
+      setChalans([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const [clientsData, inventoryData, chalansData] = await Promise.all([
+        api.getClients(),
+        api.getInventory(),
+        api.getChalans()
+      ]);
+      setClients(clientsData);
+      setInventory(inventoryData);
+      setChalans(chalansData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      // Clear data on error (e.g., invalid token)
+      setClients([]);
+      setInventory([]);
+      setChalans([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch data when component mounts and when authentication status changes
   useEffect(() => {
-    (async () => {
-      try {
-        const [clientsData, inventoryData, chalansData] = await Promise.all([
-          api.getClients(),
-          api.getInventory(),
-          api.getChalans()
-        ]);
-        setClients(clientsData);
-        setInventory(inventoryData);
-        setChalans(chalansData);
-      } catch (err) {
-        // handle error (optionally set error state)
-      }
-    })();
-  }, []);
+    fetchAllData();
+  }, [isAuthenticated]);
 
   const addClient = async (client: Omit<Client, 'id' | 'createdAt'>) => {
     await api.addClient(client);
-    setClients(await api.getClients());
+    await fetchAllData();
   };
 
   const addClients = async (newClients: Omit<Client, 'id' | 'createdAt'>[]) => {

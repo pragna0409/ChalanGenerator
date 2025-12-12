@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, User, Lock, Mail, UserPlus } from 'lucide-react';
 
@@ -7,6 +7,7 @@ export const AuthForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rootExists, setRootExists] = useState(false);
   const { login, register } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -16,6 +17,23 @@ export const AuthForm: React.FC = () => {
     role: 'add-only' as const,
     isRoot: false
   });
+
+  // Check if root user exists when component mounts or when switching to register
+  useEffect(() => {
+    const checkRootUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/api/auth/check-root');
+        const data = await res.json();
+        setRootExists(data.rootExists);
+      } catch (err) {
+        console.error('Error checking root user:', err);
+      }
+    };
+
+    if (!isLogin) {
+      checkRootUser();
+    }
+  }, [isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +74,7 @@ export const AuthForm: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.03%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-      
+
       <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 w-full max-w-md shadow-2xl">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -70,22 +88,20 @@ export const AuthForm: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsLogin(true)}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              isLogin 
-                ? 'bg-white text-gray-900 shadow-lg' 
-                : 'text-white hover:bg-white/10'
-            }`}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${isLogin
+              ? 'bg-white text-gray-900 shadow-lg'
+              : 'text-white hover:bg-white/10'
+              }`}
           >
             Login
           </button>
           <button
             type="button"
             onClick={() => setIsLogin(false)}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              !isLogin 
-                ? 'bg-white text-gray-900 shadow-lg' 
-                : 'text-white hover:bg-white/10'
-            }`}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${!isLogin
+              ? 'bg-white text-gray-900 shadow-lg'
+              : 'text-white hover:bg-white/10'
+              }`}
           >
             Register
           </button>
@@ -165,16 +181,18 @@ export const AuthForm: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="isRoot"
-                  checked={formData.isRoot}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-500 bg-white/10 border border-white/20 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <label className="text-sm text-white">Root User (Admin)</label>
-              </div>
+              {!rootExists && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="isRoot"
+                    checked={formData.isRoot}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-500 bg-white/10 border border-white/20 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label className="text-sm text-white">Root User (Admin)</label>
+                </div>
+              )}
             </>
           )}
 

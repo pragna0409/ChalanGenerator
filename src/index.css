@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide elements with no-print class when printing or generating PDF */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  #chalan-form {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Also hide for html2canvas PDF generation */
+.no-print {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
