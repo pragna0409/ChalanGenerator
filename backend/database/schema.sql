@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS clients (
     address VARCHAR(255),
     phone VARCHAR(20),
     email VARCHAR(100),
+    pincode VARCHAR(10),
+    gstin VARCHAR(15),
+    arn VARCHAR(50),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -38,6 +41,7 @@ CREATE TABLE IF NOT EXISTS chalans (
     poNumber VARCHAR(50),
     vehicleNo VARCHAR(50),
     remarks TEXT,
+    arn VARCHAR(50),
     createdBy INT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (clientId) REFERENCES clients(id) ON DELETE CASCADE,

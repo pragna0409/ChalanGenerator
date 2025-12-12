@@ -29,11 +29,11 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // POST /api/clients
 router.post('/', authenticateToken, async (req, res) => {
-  const { name, address, phone, email } = req.body;
+  const { name, address, phone, email, pincode, gstin, arn } = req.body;
   try {
     const [result] = await pool.query(
-      'INSERT INTO clients (name, address, phone, email) VALUES (?, ?, ?, ?)',
-      [name, address, phone, email]
+      'INSERT INTO clients (name, address, phone, email, pincode, gstin, arn) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, address, phone, email, pincode, gstin, arn || null]
     );
     const [rows] = await pool.query('SELECT * FROM clients WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
@@ -45,11 +45,11 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/clients/:id
 router.put('/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { name, address, phone, email } = req.body;
+  const { name, address, phone, email, pincode, gstin, arn } = req.body;
   try {
     await pool.query(
-      'UPDATE clients SET name = ?, address = ?, phone = ?, email = ? WHERE id = ?',
-      [name, address, phone, email, id]
+      'UPDATE clients SET name = ?, address = ?, phone = ?, email = ?, pincode = ?, gstin = ?, arn = ? WHERE id = ?',
+      [name, address, phone, email, pincode, gstin, arn || null, id]
     );
     const [rows] = await pool.query('SELECT * FROM clients WHERE id = ?', [id]);
     res.json(rows[0]);
